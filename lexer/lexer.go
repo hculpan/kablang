@@ -10,18 +10,21 @@ type Token struct {
 	TypeID int
 	Value  string
 	Name   string
+
+	Line int
+	Col  int
 }
 
 // NewToken ...
-func NewToken(typeID int, v string, name string) *Token {
-	return &Token{Value: v, TypeID: typeID, Name: name}
+func NewToken(typeID int, v string, name string, line int, col int) *Token {
+	return &Token{Value: v, TypeID: typeID, Name: name, Line: line, Col: col}
 }
 
 // Lex is the main entry point into the lexer.
 // Returns a list of all the tokens within the
 // given string.  This is meant to be a more generic
 // lexer, thus the keywords are passed in.
-func Lex(s string, keywords []TokenDef) ([]Token, error) {
+func Lex(s string, keywords []TokenDef, currLine int) ([]Token, error) {
 	initializeLexer()
 
 	result := []Token{}
@@ -45,7 +48,7 @@ func Lex(s string, keywords []TokenDef) ([]Token, error) {
 
 		switch {
 		case len(currentSelection) == 1:
-			lastTokenSelection = NewToken(currentSelection[0].TypeID, currentBuffer, currentSelection[0].Name)
+			lastTokenSelection = NewToken(currentSelection[0].TypeID, currentBuffer, currentSelection[0].Name, currLine, currLoc+1)
 		case len(currentSelection) == 0 && lastTokenSelection != nil:
 			result = append(result, *lastTokenSelection)
 			lastTokenSelection = nil
@@ -102,9 +105,11 @@ func initializeLexer() {
 func reduceSelection(s string, currentSelection []TokenDef) []TokenDef {
 	result := []TokenDef{}
 	for _, t := range currentSelection {
-		r := t.exp.FindStringIndex(s)
-		if len(r) > 0 && r[0] == 0 {
-			result = append(result, t)
+		if t.exp != nil {
+			r := t.exp.FindStringIndex(s)
+			if len(r) > 0 && r[0] == 0 {
+				result = append(result, t)
+			}
 		}
 	}
 	return result

@@ -16,15 +16,15 @@ type LexerHandler struct {
 func NewLexerHandler(lines []string, keywords []lexer.TokenDef) *LexerHandler {
 	result := &LexerHandler{tokens: []lexer.Token{}, Errors: []error{}, currTokenIndex: 0}
 
-	for _, l := range lines {
-		tokens, err := lexer.Lex(l, keywords)
+	for i, l := range lines {
+		tokens, err := lexer.Lex(l, keywords, i+1)
 		if err != nil {
 			result.Errors = append(result.Errors, err)
 		}
-		tokens = append(tokens, *lexer.NewToken(NEWLINE, "\n", "Newline"))
+		tokens = append(tokens, *lexer.NewToken(lexer.NEWLINE, "\n", "Newline", i+1, len(l)))
 		result.tokens = append(result.tokens, tokens...)
 	}
-	result.tokens = append(result.tokens, *lexer.NewToken(lexer.END_TOKEN_LIST, "END_TOKENS", "End of tokens"))
+	result.tokens = append(result.tokens, *lexer.NewToken(lexer.END_TOKEN_LIST, "END_TOKENS", "End of tokens", len(lines), 0))
 
 	return result
 }

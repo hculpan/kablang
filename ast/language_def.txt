@@ -9,7 +9,7 @@
 <additive_operator> := + | -
 <term> := <factor> | <factor> <multiplicative_operator> <term>
 <multiplicative_operator> := * | /
-<factor> := <number> | <signed_number> | ( <expression> )
+<factor> := <number> | <signed_number> | ( <num- expression> )
 <signed_number> := <additive_operator> <number>
 <number> := <positive_integer> | <positive_integer> . <positive_integer>
 <positive_integer> := <digit> | <digit> <positive_integer>

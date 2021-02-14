@@ -22,7 +22,7 @@ var keywords []TokenDef = []TokenDef{
 }
 
 func TestLexer1(t *testing.T) {
-	r, err := Lex("1+2.3", []TokenDef{})
+	r, err := Lex("1+2.3", []TokenDef{}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -39,7 +39,7 @@ func TestLexer1(t *testing.T) {
 }
 
 func TestLexer2(t *testing.T) {
-	r, err := Lex("1 + 2.3", []TokenDef{})
+	r, err := Lex("1 + 2.3", []TokenDef{}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -56,7 +56,7 @@ func TestLexer2(t *testing.T) {
 }
 
 func TestLexer3(t *testing.T) {
-	r, err := Lex("1 +=     2.3", []TokenDef{})
+	r, err := Lex("1 +=     2.3", []TokenDef{}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -73,7 +73,7 @@ func TestLexer3(t *testing.T) {
 }
 
 func TestLexer4(t *testing.T) {
-	r, err := Lex("1 +=     2.3++", []TokenDef{})
+	r, err := Lex("1 +=     2.3++", []TokenDef{}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -91,7 +91,7 @@ func TestLexer4(t *testing.T) {
 }
 
 func TestLexer5(t *testing.T) {
-	r, err := Lex("  my_number1=1+ 0.3  ", []TokenDef{})
+	r, err := Lex("  my_number1=1+ 0.3  ", []TokenDef{}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -110,7 +110,7 @@ func TestLexer5(t *testing.T) {
 }
 
 func TestLexer6_ErrorTesting(t *testing.T) {
-	_, err := Lex("  my_number1 = ~1+ .3", []TokenDef{})
+	_, err := Lex("  my_number1 = ~1+ .3", []TokenDef{}, 1)
 	if err == nil {
 		t.Log("Should have received error for unknown token '~'")
 		t.Fail()
@@ -119,7 +119,7 @@ func TestLexer6_ErrorTesting(t *testing.T) {
 }
 
 func TestLexer6_StringTokenizing(t *testing.T) {
-	r, err := Lex(`  my_string = "This is a test string"`, []TokenDef{})
+	r, err := Lex(`  my_string = "This is a test string"`, []TokenDef{}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -140,7 +140,7 @@ func TestLexer6_StringTokenizing(t *testing.T) {
 func TestLexer7_ForKeywordTest(t *testing.T) {
 	r, err := Lex(`  for (a<2) {}`, []TokenDef{
 		{TypeID: FOR, Match: "for"},
-	})
+	}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -168,7 +168,7 @@ func TestLexer8(t *testing.T) {
 		{TypeID: FOR, Match: "for"},
 		{TypeID: IF, Match: "if"},
 		{TypeID: ELSE, Match: "else"},
-	})
+	}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -205,7 +205,7 @@ func TestLexer9(t *testing.T) {
 		{TypeID: FOR, Match: "for"},
 		{TypeID: IF, Match: "if"},
 		{TypeID: ELSE, Match: "else"},
-	})
+	}, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -250,7 +250,7 @@ func TestLexer10(t *testing.T) {
 
 	   } else if (!fora.Equals  ("A test")) {
 
-	   }`, keywords)
+	   }`, keywords, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -287,7 +287,7 @@ func TestLexer10(t *testing.T) {
 }
 
 func TestLexer11_PrintlnTest(t *testing.T) {
-	r, err := Lex(`println "Hello" + " world"`, keywords)
+	r, err := Lex(`println "Hello" + " world"`, keywords, 1)
 	if err != nil {
 		t.Log(err)
 		t.Fail()

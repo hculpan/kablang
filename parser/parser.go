@@ -9,9 +9,8 @@ import (
 
 // Keyword constantsw
 const (
-	NEWLINE = lexer.END_TOKEN_LIST + 1
-	PRINTLN = lexer.END_TOKEN_LIST + 2
-	PRINT   = lexer.END_TOKEN_LIST + 3
+	PRINTLN = lexer.END_TOKEN_LIST + 1
+	PRINT   = lexer.END_TOKEN_LIST + 2
 )
 
 var keywords []lexer.TokenDef = []lexer.TokenDef{
@@ -77,22 +76,22 @@ func (p *Parser) parseStatements() *ast.Statements {
 		switch t.TypeID {
 		case lexer.END_TOKEN_LIST:
 			done = true
-		case NEWLINE:
+		case lexer.NEWLINE:
 			done = true
 		case PRINT:
 			p.lexerHandler.Push()
 			stmts = append(stmts, p.parsePrintStatement())
-			if !p.lexerHandler.Swallow(NEWLINE) {
-				p.errors = append(p.errors, fmt.Errorf("Expected NEWLINE, found '%s'", t.Value))
+			if !p.lexerHandler.Swallow(lexer.NEWLINE) {
+				p.addExpectedErrorForTypeID(lexer.NEWLINE, t)
 			}
 		case PRINTLN:
 			p.lexerHandler.Push()
 			stmts = append(stmts, p.parsePrintlnStatement())
-			if !p.lexerHandler.Swallow(NEWLINE) {
-				p.errors = append(p.errors, fmt.Errorf("Expected NEWLINE, found '%s'", t.Value))
+			if !p.lexerHandler.Swallow(lexer.NEWLINE) {
+				p.addExpectedErrorForTypeID(lexer.NEWLINE, t)
 			}
 		default:
-			p.errors = append(p.errors, fmt.Errorf("Unexpected token: '%s'", t.Value))
+			p.addError(fmt.Errorf("Unexpected token: '%s' at line %d:%d", t.Value, t.Line, t.Col))
 			done = true
 		}
 	}
@@ -105,10 +104,10 @@ func (p *Parser) parsePrintStatement() *ast.PrintStatement {
 
 	t := p.lexerHandler.Peek()
 	switch t.TypeID {
-	case NEWLINE:
-		p.addError(fmt.Errorf("Expected expression, found NEWLINE"))
+	case lexer.NEWLINE:
+		p.addError(fmt.Errorf("Expected expression, found NEWLINE at line %d:%d", t.Line, t.Col))
 	case lexer.END_TOKEN_LIST:
-		p.addError(fmt.Errorf("Expected expression, found End of tokens"))
+		p.addError(fmt.Errorf("Expected expression, found End of tokens at line %d:%d", t.Line, t.Col))
 	case lexer.STRING:
 		return ast.NewStringPrintStatement(p.parseStringExpression())
 	case lexer.INTEGER:
@@ -125,7 +124,7 @@ func (p *Parser) parsePrintlnStatement() *ast.PrintlnStatement {
 
 	t := p.lexerHandler.Peek()
 	switch t.TypeID {
-	case NEWLINE:
+	case lexer.NEWLINE:
 		return ast.NewEmptyPrintlnStatement()
 	case lexer.END_TOKEN_LIST:
 		return ast.NewEmptyPrintlnStatement()
@@ -152,7 +151,7 @@ func (p *Parser) parseStringExpression() *ast.StringExpression {
 	case lexer.PLUS:
 		t2 := p.lexerHandler.Peek()
 		if t2.TypeID != lexer.STRING {
-			p.addError(fmt.Errorf("Expecting string, found '%s'", t2.Name))
+			p.addExpectedErrorForTypeID(lexer.STRING, t2)
 		}
 		result.StringExpressionNode = p.parseStringExpression()
 	default:
@@ -164,13 +163,35 @@ func (p *Parser) parseStringExpression() *ast.StringExpression {
 
 func (p *Parser) swallow(typeID int) bool {
 	if !p.lexerHandler.Swallow(typeID) {
-		p.addError(fmt.Errorf("Expecting type %d, found type %d", typeID, p.lexerHandler.Peek().TypeID))
+		p.addExpectedErrorForTypeID(typeID, p.lexerHandler.Peek())
 		return false
 	}
 
 	return true
 }
 
+func (p *Parser) addExpectedErrorForTypeID(expected int, actual lexer.Token) {
+	tokenDef := lexer.GetTokenDef(expected)
+	if tokenDef != nil {
+		p.addExpectedError(*tokenDef, actual)
+	}
+}
+
+func (p *Parser) addExpectedError(expected lexer.TokenDef, actual lexer.Token) {
+	p.addError(fmt.Errorf("Expected %s, found %s at line %d:%d", expected.Name, actual.Name, actual.Line, actual.Col))
+}
+
 func (p *Parser) addError(e error) {
 	p.errors = append(p.errors, e)
+}
+
+// GetTokenDef tries to get the token definition from the
+// lexer definition, and if that fails, tries to get it
+// from the keywords
+func (p *Parser) GetTokenDef(typeID int) *lexer.TokenDef {
+	result := lexer.GetTokenDef(typeID)
+	if result == nil && typeID < lexer.END_TOKEN_LIST+len(keywords) {
+		result = &keywords[typeID-lexer.END_TOKEN_LIST]
+	}
+	return result
 }

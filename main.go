@@ -38,7 +38,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(program.AsString(""))
+	//	fmt.Println(program.AsString(""))
 
 	fmt.Println("Starting execution")
 

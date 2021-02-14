@@ -34,6 +34,7 @@ const (
 	NOT
 	NOT_EQUALS
 	PERIOD
+	NEWLINE
 	END_TOKEN_LIST
 )
 
@@ -67,8 +68,21 @@ var tokenDefs []TokenDef = []TokenDef{
 	{TypeID: GREATER_THAN, Match: `^>$`, Name: "Greater Than"},
 	{TypeID: GREATER_THAN_EQUALS, Match: `^>=$`, Name: "Greater Than or Equals"},
 	{TypeID: PERIOD, Match: `^\.$`, Name: "Period"},
+	{TypeID: NEWLINE, Match: ``, Name: "Newline"},
+	{TypeID: END_TOKEN_LIST, Match: ``, Name: "End of tokens"},
+}
+
+// GetTokenDef returns the token definition
+// for the specified type id
+func GetTokenDef(typeID int) *TokenDef {
+	if typeID > END_TOKEN_LIST {
+		return nil
+	}
+	return &tokenDefs[typeID]
 }
 
 func (t *TokenDef) compile() {
-	t.exp = regexp.MustCompile(t.Match)
+	if len(t.Match) > 0 {
+		t.exp = regexp.MustCompile(t.Match)
+	}
 }
