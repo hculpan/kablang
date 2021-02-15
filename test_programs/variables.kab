@@ -1,0 +1,10 @@
+var ab string
+var b string
+var num number
+ab = "The answer to (20+(5*2))*(10/(1+1))*-1"
+b = " is "
+num = (20+(5*2))*(10/(1+1))*-1
+print ab
+print b 
+print num
+println

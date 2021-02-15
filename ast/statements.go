@@ -15,7 +15,9 @@ func (s *Statements) AsString(indent string) string {
 	result := indent + "Statements"
 	if s.StatementListNode != nil {
 		for _, v := range s.StatementListNode {
-			result += "\n" + v.AsString(indent+"  ")
+			if v != nil {
+				result += "\n" + v.AsString(indent+"  ")
+			}
 		}
 	}
 	return result

@@ -1,0 +1,49 @@
+Program
+  Block
+    Statements
+      PrintStatement
+        StringExpression
+          String: 'The answer is '
+      PrintStatement
+        NumExpression
+          Term
+            Factor
+              NumExpression
+                Term
+                  Factor
+                    Signed number: '20'
+                  +
+                  NumExpression
+                    Term
+                      Factor
+                        NumExpression
+                          Term
+                            Factor
+                              Signed number: '5'
+                              *
+                              Term
+                                Factor
+                                  Signed number: '2'
+              *
+              Term
+                Factor
+                  NumExpression
+                    Term
+                      Factor
+                        Signed number: '10'
+                        /
+                        Term
+                          Factor
+                            NumExpression
+                              Term
+                                Factor
+                                  Signed number: '1'
+                                +
+                                NumExpression
+                                  Term
+                                    Factor
+                                      Signed number: '1'
+      PrintlnStatement
+      PrintlnStatement
+        StringExpression
+          String: 'All done!'

@@ -4,11 +4,24 @@ package ast
 // of statements executed in sequence
 type Block struct {
 	StatementsNode *Statements
+	Symbols        map[string]Symbol
 }
 
 // NewBlock ...
-func NewBlock(stmts *Statements) *Block {
-	return &Block{StatementsNode: stmts}
+func NewBlock() *Block {
+	return &Block{Symbols: map[string]Symbol{}}
+}
+
+// AddSymbol adds a symbol to the internal map
+func (b *Block) AddSymbol(s Symbol) {
+	if s != nil {
+		b.Symbols[s.GetName()] = s
+	}
+}
+
+// RemoveSymbol removes a symbol from the internal map
+func (b *Block) RemoveSymbol(name string) {
+	delete(b.Symbols, name)
 }
 
 // AsString return the node as a string

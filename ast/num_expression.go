@@ -2,19 +2,31 @@ package ast
 
 import "fmt"
 
+// List the posible operations
+// allowable in a numeric expression
+const (
+	NoOperator = iota
+	PlusOperator
+	MinusOperator
+	MultOperator
+	DivOperator
+	ModuloOperator
+)
+
 // NumExpression ...
 type NumExpression struct {
-	numNode           SignedNumber
-	numExpressionNode Expression
+	TermNode          *Term
+	Operator          int
+	NumExpressionNode Expression
 }
 
 // NewNumExpression ...
-func NewNumExpression(s SignedNumber, exp Expression) (NumExpression, error) {
-	result := NumExpression{numNode: s, numExpressionNode: nil}
+func NewNumExpression(t *Term, exp Expression) (*NumExpression, error) {
+	result := &NumExpression{TermNode: t, NumExpressionNode: nil, Operator: NoOperator}
 
 	switch exp.(type) {
 	case NumExpression:
-		result.numExpressionNode = exp
+		result.NumExpressionNode = exp
 	default:
 		return result, fmt.Errorf("Expecting number expression, found type %T", exp)
 	}
@@ -25,5 +37,18 @@ func NewNumExpression(s SignedNumber, exp Expression) (NumExpression, error) {
 // AsString return the node as a string
 func (s NumExpression) AsString(indent string) string {
 	result := indent + "NumExpression"
+
+	if s.TermNode != nil {
+		result += fmt.Sprintf("\n%s", s.TermNode.AsString("  "+indent))
+	}
+
+	if s.Operator == PlusOperator {
+		result += "\n" + indent + "    +"
+		result += fmt.Sprintf("\n%s", s.NumExpressionNode.AsString("    "+indent))
+	} else if s.Operator == MinusOperator {
+		result += "\n" + indent + "    -"
+		result += fmt.Sprintf("\n%s", s.NumExpressionNode.AsString("    "+indent))
+	}
+
 	return result
 }

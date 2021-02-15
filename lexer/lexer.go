@@ -24,7 +24,7 @@ func NewToken(typeID int, v string, name string, line int, col int) *Token {
 // Returns a list of all the tokens within the
 // given string.  This is meant to be a more generic
 // lexer, thus the keywords are passed in.
-func Lex(s string, keywords []TokenDef, currLine int) ([]Token, error) {
+func Lex(s string, currLine int) ([]Token, error) {
 	initializeLexer()
 
 	result := []Token{}
@@ -44,7 +44,7 @@ func Lex(s string, keywords []TokenDef, currLine int) ([]Token, error) {
 		}
 
 		currentSelection := reduceSelection(currentBuffer, tokenDefs)
-		//fmt.Printf("Buffer=%s, selection=%v\n", currentBuffer, currentSelection)
+		// fmt.Printf("Buffer=%s, selection=%v\n", currentBuffer, currentSelection)
 
 		switch {
 		case len(currentSelection) == 1:
@@ -67,28 +67,31 @@ func Lex(s string, keywords []TokenDef, currLine int) ([]Token, error) {
 	// A bit of a kludge; keywords will get set as identifiers
 	// initally, now go through them to see if any are actually
 	// keywords
-	result = checkForKeywords(result, keywords)
+	result = checkForKeywords(result)
 
 	return result, nil
 }
 
-func findKeywordMatch(s string, keywords []TokenDef) *TokenDef {
-	for _, k := range keywords {
-		if s == k.Match {
-			return &k
+func findKeywordMatch(s string) *TokenDef {
+	for _, k := range tokenDefs {
+		if k.Keyword {
+			r := k.exp.FindStringIndex(s)
+			if len(r) > 0 && r[0] == 0 {
+				return &k
+			}
 		}
 	}
 
 	return nil
 }
 
-func checkForKeywords(tokens []Token, keywords []TokenDef) []Token {
+func checkForKeywords(tokens []Token) []Token {
 	result := []Token{}
 	for _, v := range tokens {
 		if v.TypeID == IDENTIFIER {
-			if t := findKeywordMatch(v.Value, keywords); t != nil {
+			if t := findKeywordMatch(v.Value); t != nil {
 				v.TypeID = t.TypeID
-				v.Name = "Keyword"
+				v.Name = t.Name
 			}
 		}
 		result = append(result, v)
@@ -105,7 +108,7 @@ func initializeLexer() {
 func reduceSelection(s string, currentSelection []TokenDef) []TokenDef {
 	result := []TokenDef{}
 	for _, t := range currentSelection {
-		if t.exp != nil {
+		if t.exp != nil && !t.Keyword {
 			r := t.exp.FindStringIndex(s)
 			if len(r) > 0 && r[0] == 0 {
 				result = append(result, t)

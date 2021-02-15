@@ -7,21 +7,12 @@ import (
 	"github.com/hculpan/kablang/lexer"
 )
 
-// Keyword constantsw
-const (
-	PRINTLN = lexer.END_TOKEN_LIST + 1
-	PRINT   = lexer.END_TOKEN_LIST + 2
-)
-
-var keywords []lexer.TokenDef = []lexer.TokenDef{
-	{TypeID: PRINTLN, Match: "println", Name: "Println"},
-	{TypeID: PRINT, Match: "print", Name: "Print"},
-}
-
 // Parser ...
 type Parser struct {
 	errors       []error
 	lexerHandler *LexerHandler
+
+	currentBlock *ast.Block
 }
 
 // NewParser creates a new parser and returns
@@ -35,21 +26,14 @@ func NewParser() Parser {
 // and errors that were found
 func (p *Parser) Parse(lines []string) (*ast.Program, []error) {
 	p.errors = []error{}
-	fmt.Print("Lexing program...")
-	p.lexerHandler = NewLexerHandler(lines, keywords)
+	p.lexerHandler = NewLexerHandler(lines)
 	if len(p.lexerHandler.Errors) != 0 {
 		fmt.Println()
 		return nil, []error{p.lexerHandler.Errors[0]}
 	}
-	fmt.Println("done")
-
-	//	p.printTokens()
-
-	fmt.Print("Parsing program...")
 
 	result := p.parseProgram()
 
-	fmt.Println("done")
 	return result, p.errors
 }
 
@@ -64,7 +48,10 @@ func (p *Parser) parseProgram() *ast.Program {
 }
 
 func (p *Parser) parseBlock() *ast.Block {
-	return ast.NewBlock(p.parseStatements())
+	result := ast.NewBlock()
+	p.currentBlock = result
+	result.StatementsNode = p.parseStatements()
+	return result
 }
 
 func (p *Parser) parseStatements() *ast.Statements {
@@ -72,85 +59,179 @@ func (p *Parser) parseStatements() *ast.Statements {
 
 	done := false
 	for !done {
+		var stmt ast.Statement = nil
 		t := p.lexerHandler.Pop()
 		switch t.TypeID {
-		case lexer.END_TOKEN_LIST:
+		case lexer.END_TOKEN_LIST, lexer.NEWLINE:
 			done = true
-		case lexer.NEWLINE:
-			done = true
-		case PRINT:
+		case lexer.HASH:
+			for {
+				t = p.lexerHandler.Pop()
+				if t.TypeID == lexer.NEWLINE || t.TypeID == lexer.END_TOKEN_LIST {
+					break
+				}
+			}
+		case lexer.VAR:
+			stmt = p.parseVarStatement()
+			if stmt != nil {
+				symbol := stmt.(*ast.VarStatement).SymbolNode
+				if _, exists := p.currentBlock.Symbols[symbol.GetName()]; exists {
+					p.addError(fmt.Errorf("Redefinition of variable '%s' at %d:%d", symbol.GetName(), t.Line, t.Col))
+				} else {
+					p.currentBlock.AddSymbol(symbol)
+				}
+			}
+			p.swallow(lexer.NEWLINE)
+		case lexer.IDENTIFIER:
+			stmt = p.parseAssignStatement(&t)
+			p.swallow(lexer.NEWLINE)
+		case lexer.PRINT:
 			p.lexerHandler.Push()
-			stmts = append(stmts, p.parsePrintStatement())
+			stmt = p.parsePrintStatement(false)
 			if !p.lexerHandler.Swallow(lexer.NEWLINE) {
 				p.addExpectedErrorForTypeID(lexer.NEWLINE, t)
 			}
-		case PRINTLN:
+		case lexer.PRINTLN:
 			p.lexerHandler.Push()
-			stmts = append(stmts, p.parsePrintlnStatement())
-			if !p.lexerHandler.Swallow(lexer.NEWLINE) {
-				p.addExpectedErrorForTypeID(lexer.NEWLINE, t)
-			}
+			stmt = p.parsePrintStatement(true)
+			p.swallow(lexer.NEWLINE)
 		default:
 			p.addError(fmt.Errorf("Unexpected token: '%s' at line %d:%d", t.Value, t.Line, t.Col))
 			done = true
+		}
+		if stmt != nil {
+			stmts = append(stmts, stmt)
 		}
 	}
 
 	return ast.NewStatements(stmts)
 }
 
-func (p *Parser) parsePrintStatement() *ast.PrintStatement {
-	p.swallow(PRINT)
+func (p *Parser) parseAssignStatement(t *lexer.Token) *ast.AssignStatement {
+	if t.TypeID != lexer.IDENTIFIER {
+		return nil
+	}
 
-	t := p.lexerHandler.Peek()
-	switch t.TypeID {
-	case lexer.NEWLINE:
-		p.addError(fmt.Errorf("Expected expression, found NEWLINE at line %d:%d", t.Line, t.Col))
-	case lexer.END_TOKEN_LIST:
-		p.addError(fmt.Errorf("Expected expression, found End of tokens at line %d:%d", t.Line, t.Col))
-	case lexer.STRING:
-		return ast.NewStringPrintStatement(p.parseStringExpression())
-	case lexer.INTEGER:
-		//		return ast.NewNumPrintlnStatement(p.parseStringExpression())
-	case lexer.FLOAT:
-		//		return ast.NewNumPrintlnStatement(p.parseStringExpression())
+	p.swallow(lexer.EQUALS)
+
+	if symbol, exists := p.currentBlock.Symbols[t.Value]; exists {
+		stmt := ast.NewAssignStatement(symbol)
+		switch symbol.GetDataType() {
+		case ast.TypeString:
+			stmt.ExpressionNode = p.parseStringExpression()
+			return stmt
+		case ast.TypeNumber:
+			stmt.ExpressionNode = p.parseNumExpression()
+			return stmt
+		default:
+			p.addError(fmt.Errorf("Unsupported data type for variable assignment at line %d:%d", t.Line, t.Col))
+			return nil
+		}
+	}
+
+	p.addError(fmt.Errorf("Assignment without declaration for variable '%s' at line %d:%d", t.Value, t.Line, t.Col))
+	return nil
+}
+
+func (p *Parser) parseVarStatement() *ast.VarStatement {
+	nameToken := p.lexerHandler.Pop()
+	if nameToken.TypeID != lexer.IDENTIFIER {
+		p.lexerHandler.Push()
+		p.addExpectedErrorForTypeID(lexer.IDENTIFIER, nameToken)
+		return nil
+	}
+
+	typeToken := p.lexerHandler.Pop()
+	if typeToken.TypeID != lexer.STRING_TYPE && typeToken.TypeID != lexer.NUMBER_TYPE {
+		p.lexerHandler.Push()
+		p.addExpectedErrorForString("Expecting data type indicator", typeToken)
+		return nil
+	}
+
+	switch typeToken.Value {
+	case "string":
+		return ast.NewVarStatement(nameToken.Value, ast.TypeString)
+	case "number":
+		return ast.NewVarStatement(nameToken.Value, ast.TypeNumber)
+	default:
+		p.addError(fmt.Errorf("Invalid data type: %s", typeToken.Value))
 	}
 
 	return nil
 }
 
-func (p *Parser) parsePrintlnStatement() *ast.PrintlnStatement {
-	p.swallow(PRINTLN)
+func (p *Parser) parsePrintStatement(endline bool) *ast.PrintStatement {
+	if endline {
+		p.swallow(lexer.PRINTLN)
+	} else {
+		p.swallow(lexer.PRINT)
+	}
 
 	t := p.lexerHandler.Peek()
 	switch t.TypeID {
 	case lexer.NEWLINE:
-		return ast.NewEmptyPrintlnStatement()
+		return ast.NewEmptyPrintStatement(endline)
 	case lexer.END_TOKEN_LIST:
-		return ast.NewEmptyPrintlnStatement()
+		return ast.NewEmptyPrintStatement(endline)
 	case lexer.STRING:
-		return ast.NewStringPrintlnStatement(p.parseStringExpression())
-	case lexer.INTEGER:
-		//		return ast.NewNumPrintlnStatement(p.parseStringExpression())
-	case lexer.FLOAT:
-		//		return ast.NewNumPrintlnStatement(p.parseStringExpression())
+		return ast.NewStringPrintStatement(p.parseStringExpression(), endline)
+	case lexer.INTEGER, lexer.FLOAT, lexer.DASH, lexer.PAREN_LEFT:
+		return ast.NewNumPrintStatement(p.parseNumExpression(), endline)
+	case lexer.IDENTIFIER:
+		if symbol, exists := p.currentBlock.Symbols[t.Value]; exists {
+			switch symbol.GetDataType() {
+			case ast.TypeString:
+				return ast.NewStringPrintStatement(p.parseStringExpression(), endline)
+			case ast.TypeNumber:
+				return ast.NewNumPrintStatement(p.parseNumExpression(), endline)
+			default:
+				p.addError(fmt.Errorf("Invalid data type for variable '%s' at %d:%d", t.Value, t.Line, t.Col))
+				return nil
+			}
+		} else {
+			p.addError(fmt.Errorf("Undeclared variable '%s' at %d:%d", t.Value, t.Line, t.Col))
+			return nil
+		}
 	}
 
 	return nil
+}
+
+func (p *Parser) parseString() ast.StringValue {
+	var result ast.StringValue
+
+	t := p.lexerHandler.Pop()
+	switch t.TypeID {
+	case lexer.IDENTIFIER:
+		if symbol, exists := p.currentBlock.Symbols[t.Value]; exists {
+			switch symbol.(type) {
+			case *ast.StringSymbol:
+				result = symbol.(*ast.StringSymbol)
+			default:
+				p.addError(fmt.Errorf("Cannot assign type %T to variable '%s' of type string", symbol, t.Value))
+				return nil
+			}
+		} else {
+			p.addError(fmt.Errorf("Undeclared variable '%s' at %d:%d", t.Value, t.Line, t.Col))
+			return nil
+		}
+	case lexer.STRING:
+		result = ast.NewString(t.Value)
+	}
+
+	return result
 }
 
 func (p *Parser) parseStringExpression() *ast.StringExpression {
-	t := p.lexerHandler.Pop()
-	result, err := ast.NewStringExpression(ast.NewString(t.Value), nil)
-	if err != nil {
-		p.addError(err)
-	}
+	var result *ast.StringExpression = ast.NewStringExpression()
 
-	t = p.lexerHandler.Pop()
+	result.StringNode = p.parseString()
+
+	t := p.lexerHandler.Pop()
 	switch t.TypeID {
 	case lexer.PLUS:
 		t2 := p.lexerHandler.Peek()
-		if t2.TypeID != lexer.STRING {
+		if t2.TypeID != lexer.STRING && t2.TypeID != lexer.IDENTIFIER {
 			p.addExpectedErrorForTypeID(lexer.STRING, t2)
 		}
 		result.StringExpressionNode = p.parseStringExpression()
@@ -171,10 +252,14 @@ func (p *Parser) swallow(typeID int) bool {
 }
 
 func (p *Parser) addExpectedErrorForTypeID(expected int, actual lexer.Token) {
-	tokenDef := lexer.GetTokenDef(expected)
+	tokenDef := p.GetTokenDef(expected)
 	if tokenDef != nil {
 		p.addExpectedError(*tokenDef, actual)
 	}
+}
+
+func (p *Parser) addExpectedErrorForString(msg string, actual lexer.Token) {
+	p.addError(fmt.Errorf("%s, found %s at line %d:%d", msg, actual.Name, actual.Line, actual.Col))
 }
 
 func (p *Parser) addExpectedError(expected lexer.TokenDef, actual lexer.Token) {
@@ -189,9 +274,5 @@ func (p *Parser) addError(e error) {
 // lexer definition, and if that fails, tries to get it
 // from the keywords
 func (p *Parser) GetTokenDef(typeID int) *lexer.TokenDef {
-	result := lexer.GetTokenDef(typeID)
-	if result == nil && typeID < lexer.END_TOKEN_LIST+len(keywords) {
-		result = &keywords[typeID-lexer.END_TOKEN_LIST]
-	}
-	return result
+	return lexer.GetTokenDef(typeID)
 }

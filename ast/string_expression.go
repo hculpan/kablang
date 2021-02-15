@@ -1,27 +1,14 @@
 package ast
 
-import "fmt"
-
 // StringExpression ...
 type StringExpression struct {
-	StringNode           *String
+	StringNode           StringValue
 	StringExpressionNode Expression
 }
 
 // NewStringExpression ...
-func NewStringExpression(s *String, exp Expression) (*StringExpression, error) {
-	result := StringExpression{StringNode: s, StringExpressionNode: nil}
-
-	switch exp.(type) {
-	case StringExpression:
-		result.StringExpressionNode = exp
-	case nil:
-		result.StringExpressionNode = nil
-	default:
-		return &result, fmt.Errorf("Expecting string expression, found type %T", exp)
-	}
-
-	return &result, nil
+func NewStringExpression() *StringExpression {
+	return &StringExpression{}
 }
 
 // AsString return the node as a string

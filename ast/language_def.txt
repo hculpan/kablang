@@ -1,17 +1,26 @@
 <program> := <block>
 <block> := <statements>
-<statements> := <statement> NL | <statement> NL <statements>
-<statement> := NULL | <print-statement> | <println-statement>
+<statements> := <statement> NEWLINE | <statement> NEWLINE <statements>
+<statement> := 
+    NULL | 
+    <print-statement> | 
+    <println-statement> | 
+    <comment-statement> | 
+    <var-statement>
+    <assignment-statement>
+<comment-statement> := # ... NEWLINE
 <print-statement> := print <string-expression> | print <num-expression>
 <println-statement> := println | println <string-expression> | println <num-expression>
+<assignment-statement> := <identifier> = <string-expression> | <identifier> = <num-expression>
+<var-statement> := var <identifier> string | var <identifier> number
 <string-expression := <string> | <string> + <string-expression>
 <num-expression> := <term> | <term> <additive_operator> <num-expression>
 <additive_operator> := + | -
 <term> := <factor> | <factor> <multiplicative_operator> <term>
 <multiplicative_operator> := * | /
-<factor> := <number> | <signed_number> | ( <num- expression> )
-<signed_number> := <additive_operator> <number>
+<factor> := <number> | <signed_number> | ( <num-expression> ) | <identifier>
+<signed_number> := <additive_operator> <number> 
 <number> := <positive_integer> | <positive_integer> . <positive_integer>
 <positive_integer> := <digit> | <digit> <positive_integer>
 <digit> := 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-<string> := " <any character> "
+<string> := " <any character> " | <identifier>

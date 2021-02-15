@@ -1,0 +1,67 @@
+Program
+  Block
+    Statements
+      VarStatement : ab                    string      
+      VarStatement : b                     string      
+      VarStatement : num                   number       '0'
+      AssignStatement
+        StringExpression
+          String: 'The answer to (20+(5*2))*(10/(1+1))*-1'
+      AssignStatement
+        StringExpression
+          String: ' is '
+      AssignStatement
+        NumExpression
+          Term
+            Factor
+              NumExpression
+                Term
+                  Factor
+                    Signed number: '20'
+                  +
+                  NumExpression
+                    Term
+                      Factor
+                        NumExpression
+                          Term
+                            Factor
+                              Signed number: '5'
+                              *
+                              Term
+                                Factor
+                                  Signed number: '2'
+              *
+              Term
+                Factor
+                  NumExpression
+                    Term
+                      Factor
+                        Signed number: '10'
+                        /
+                        Term
+                          Factor
+                            NumExpression
+                              Term
+                                Factor
+                                  Signed number: '1'
+                                +
+                                NumExpression
+                                  Term
+                                    Factor
+                                      Signed number: '1'
+                  *
+                  Term
+                    Factor
+                      Signed number: '-1'
+      PrintStatement
+        StringExpression
+          ab                    string      
+      PrintStatement
+        StringExpression
+          b                     string      
+      PrintStatement
+        NumExpression
+          Term
+            Factor
+              num                   number       '0'
+      PrintlnStatement

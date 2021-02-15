@@ -13,11 +13,11 @@ type LexerHandler struct {
 }
 
 // NewLexerHandler ...
-func NewLexerHandler(lines []string, keywords []lexer.TokenDef) *LexerHandler {
+func NewLexerHandler(lines []string) *LexerHandler {
 	result := &LexerHandler{tokens: []lexer.Token{}, Errors: []error{}, currTokenIndex: 0}
 
 	for i, l := range lines {
-		tokens, err := lexer.Lex(l, keywords, i+1)
+		tokens, err := lexer.Lex(l, i+1)
 		if err != nil {
 			result.Errors = append(result.Errors, err)
 		}
