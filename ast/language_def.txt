@@ -1,19 +1,29 @@
+TODO:
+* Calling functions
+* Built-in functions
+* User-defined functions
+  * Starts with main()
+
 <program> := <block>
-<block> := <statements>
+<block> := { <statements> }
 <statements> := <statement> NEWLINE | <statement> NEWLINE <statements>
 <statement> := 
     NULL | 
     <print-statement> | 
     <println-statement> | 
     <comment-statement> | 
-    <var-statement>
-    <assignment-statement>
+    <var-statement> |
+    <assignment-statement> |
+    <block>
 <comment-statement> := # ... NEWLINE
 <print-statement> := print <string-expression> | print <num-expression>
 <println-statement> := println | println <string-expression> | println <num-expression>
 <assignment-statement> := <identifier> = <string-expression> | <identifier> = <num-expression>
-<var-statement> := var <identifier> string | var <identifier> number
-<string-expression := <string> | <string> + <string-expression>
+<var-statement> := var <identifier> <data-type> | var <identifier> <data-type> = <string-expression | num-expression>
+<function-call> := <identifier>(<parameter-list>)
+<parameter-list> := <parameter> | <parameter>,<parameter-list>
+<parameter> := <string-expression> | <num-expression>
+<string-expression> := <string> | <string> + <string-expression>
 <num-expression> := <term> | <term> <additive_operator> <num-expression>
 <additive_operator> := + | -
 <term> := <factor> | <factor> <multiplicative_operator> <term>
@@ -24,3 +34,4 @@
 <positive_integer> := <digit> | <digit> <positive_integer>
 <digit> := 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 <string> := " <any character> " | <identifier>
+<data-type> := string | number

@@ -1,5 +1,7 @@
 package ast
 
+import "reflect"
+
 // Statements represents a series of statements
 type Statements struct {
 	StatementListNode []Statement
@@ -15,7 +17,7 @@ func (s *Statements) AsString(indent string) string {
 	result := indent + "Statements"
 	if s.StatementListNode != nil {
 		for _, v := range s.StatementListNode {
-			if v != nil {
+			if !reflect.ValueOf(v).IsNil() {
 				result += "\n" + v.AsString(indent+"  ")
 			}
 		}

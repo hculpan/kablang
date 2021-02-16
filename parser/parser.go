@@ -11,14 +11,13 @@ import (
 type Parser struct {
 	errors       []error
 	lexerHandler *LexerHandler
-
-	currentBlock *ast.Block
+	blockStack   *ast.BlockStack
 }
 
 // NewParser creates a new parser and returns
 // a list of errors, if any
 func NewParser() Parser {
-	return Parser{}
+	return Parser{blockStack: ast.NewBlockStack()}
 }
 
 // Parse parses the program send in in the lines.
@@ -44,14 +43,21 @@ func (p *Parser) printTokens() {
 }
 
 func (p *Parser) parseProgram() *ast.Program {
-	return ast.NewProgram(p.parseBlock())
+	return ast.NewProgram(p.parseBlock(nil))
 }
 
-func (p *Parser) parseBlock() *ast.Block {
-	result := ast.NewBlock()
-	p.currentBlock = result
+func (p *Parser) parseBlock(parent *ast.Block) *ast.Block {
+	p.swallow(lexer.CURLY_BRACE_LEFT)
+	result := ast.NewBlock(parent)
+	p.blockStack.Push(result)
 	result.StatementsNode = p.parseStatements()
+	p.swallow(lexer.CURLY_BRACE_RIGHT)
+	p.blockStack.Pop()
 	return result
+}
+
+func (p *Parser) currentBlock() *ast.Block {
+	return p.blockStack.Peek()
 }
 
 func (p *Parser) parseStatements() *ast.Statements {
@@ -62,7 +68,15 @@ func (p *Parser) parseStatements() *ast.Statements {
 		var stmt ast.Statement = nil
 		t := p.lexerHandler.Pop()
 		switch t.TypeID {
-		case lexer.END_TOKEN_LIST, lexer.NEWLINE:
+		case lexer.NEWLINE:
+			continue
+		case lexer.CURLY_BRACE_LEFT:
+			p.lexerHandler.Push()
+			stmt = p.parseBlock(p.blockStack.Peek())
+		case lexer.CURLY_BRACE_RIGHT:
+			p.lexerHandler.Push()
+			done = true
+		case lexer.END_TOKEN_LIST:
 			done = true
 		case lexer.HASH:
 			for {
@@ -72,14 +86,15 @@ func (p *Parser) parseStatements() *ast.Statements {
 				}
 			}
 		case lexer.VAR:
-			stmt = p.parseVarStatement()
-			if stmt != nil {
+			a, err := p.parseVarStatement()
+			if err == nil {
+				stmt = a
 				symbol := stmt.(*ast.VarStatement).SymbolNode
-				if _, exists := p.currentBlock.Symbols[symbol.GetName()]; exists {
+				if _, exists := p.currentBlock().Symbols.GetLocal(symbol.GetName()); exists {
 					p.addError(fmt.Errorf("Redefinition of variable '%s' at %d:%d", symbol.GetName(), t.Line, t.Col))
-				} else {
-					p.currentBlock.AddSymbol(symbol)
+					return nil
 				}
+				p.currentBlock().AddSymbol(symbol)
 			}
 			p.swallow(lexer.NEWLINE)
 		case lexer.IDENTIFIER:
@@ -114,7 +129,7 @@ func (p *Parser) parseAssignStatement(t *lexer.Token) *ast.AssignStatement {
 
 	p.swallow(lexer.EQUALS)
 
-	if symbol, exists := p.currentBlock.Symbols[t.Value]; exists {
+	if symbol, exists := p.currentBlock().Symbols.GetLocal(t.Value); exists {
 		stmt := ast.NewAssignStatement(symbol)
 		switch symbol.GetDataType() {
 		case ast.TypeString:
@@ -133,31 +148,49 @@ func (p *Parser) parseAssignStatement(t *lexer.Token) *ast.AssignStatement {
 	return nil
 }
 
-func (p *Parser) parseVarStatement() *ast.VarStatement {
+func (p *Parser) parseVarStatement() (*ast.VarStatement, error) {
 	nameToken := p.lexerHandler.Pop()
 	if nameToken.TypeID != lexer.IDENTIFIER {
 		p.lexerHandler.Push()
 		p.addExpectedErrorForTypeID(lexer.IDENTIFIER, nameToken)
-		return nil
+		return nil, fmt.Errorf("")
 	}
 
 	typeToken := p.lexerHandler.Pop()
 	if typeToken.TypeID != lexer.STRING_TYPE && typeToken.TypeID != lexer.NUMBER_TYPE {
 		p.lexerHandler.Push()
 		p.addExpectedErrorForString("Expecting data type indicator", typeToken)
-		return nil
+		return nil, fmt.Errorf("")
 	}
+
+	var result *ast.VarStatement = nil
 
 	switch typeToken.Value {
 	case "string":
-		return ast.NewVarStatement(nameToken.Value, ast.TypeString)
+		result = ast.NewVarStatement(nameToken.Value, ast.TypeString)
 	case "number":
-		return ast.NewVarStatement(nameToken.Value, ast.TypeNumber)
+		result = ast.NewVarStatement(nameToken.Value, ast.TypeNumber)
 	default:
 		p.addError(fmt.Errorf("Invalid data type: %s", typeToken.Value))
+		return nil, fmt.Errorf("")
 	}
 
-	return nil
+	t := p.lexerHandler.Peek()
+	if t.TypeID == lexer.EQUALS {
+		p.swallow(lexer.EQUALS)
+		switch result.SymbolNode.GetDataType() {
+		case ast.TypeString:
+			result.ExpressionNode = p.parseStringExpression()
+		case ast.TypeNumber:
+			result.ExpressionNode = p.parseNumExpression()
+		default:
+			p.addError(fmt.Errorf("Invalid data type assigned to variable '%s' of type '%s' at %d:%d",
+				result.SymbolNode.GetName(), ast.GetTypeName(result.SymbolNode.GetDataType()), t.Line, t.Col))
+			return nil, fmt.Errorf("")
+		}
+	}
+
+	return result, nil
 }
 
 func (p *Parser) parsePrintStatement(endline bool) *ast.PrintStatement {
@@ -178,7 +211,7 @@ func (p *Parser) parsePrintStatement(endline bool) *ast.PrintStatement {
 	case lexer.INTEGER, lexer.FLOAT, lexer.DASH, lexer.PAREN_LEFT:
 		return ast.NewNumPrintStatement(p.parseNumExpression(), endline)
 	case lexer.IDENTIFIER:
-		if symbol, exists := p.currentBlock.Symbols[t.Value]; exists {
+		if symbol, exists := p.currentBlock().Symbols.Get(t.Value); exists {
 			switch symbol.GetDataType() {
 			case ast.TypeString:
 				return ast.NewStringPrintStatement(p.parseStringExpression(), endline)
@@ -203,7 +236,7 @@ func (p *Parser) parseString() ast.StringValue {
 	t := p.lexerHandler.Pop()
 	switch t.TypeID {
 	case lexer.IDENTIFIER:
-		if symbol, exists := p.currentBlock.Symbols[t.Value]; exists {
+		if symbol, exists := p.currentBlock().Symbols.Get(t.Value); exists {
 			switch symbol.(type) {
 			case *ast.StringSymbol:
 				result = symbol.(*ast.StringSymbol)

@@ -2,7 +2,8 @@ package ast
 
 // VarStatement is a "println" statement
 type VarStatement struct {
-	SymbolNode Symbol
+	SymbolNode     Symbol
+	ExpressionNode Expression
 }
 
 // NewVarStatement ...
@@ -12,5 +13,11 @@ func NewVarStatement(name string, typeID int) *VarStatement {
 
 // AsString return the node as a string
 func (s VarStatement) AsString(indent string) string {
-	return indent + "VarStatement : " + s.SymbolNode.AsString("")
+	result := indent + "VarStatement : " + s.SymbolNode.AsString("")
+
+	if s.ExpressionNode != nil {
+		result += "\n" + "  " + indent + "=\n" + s.ExpressionNode.AsString("  "+indent)
+	}
+
+	return result
 }

@@ -1,0 +1,39 @@
+Program
+  Block
+    Statements
+      VarStatement : Symbol: a                     string      
+        =
+        StringExpression
+          String: 'Hello'
+      VarStatement : Symbol: b                     number       '0'
+        =
+        NumExpression
+          Term
+            Factor
+              Signed number: '1'
+      Block
+        Statements
+          VarStatement : Symbol: a                     number       '0'
+          AssignStatement
+            NumExpression
+              Term
+                Factor
+                  Signed number: '2'
+          PrintlnStatement
+            NumExpression
+              Term
+                Factor
+                  Symbol: a                     number       '0'
+                +
+                NumExpression
+                  Term
+                    Factor
+                      Symbol: b                     number       '0'
+      PrintlnStatement
+        StringExpression
+          Symbol: a                     string      
+      PrintlnStatement
+        NumExpression
+          Term
+            Factor
+              Symbol: b                     number       '0'

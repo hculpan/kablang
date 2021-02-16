@@ -67,7 +67,7 @@ func (p *Parser) factor() *ast.Factor {
 		result.ParenNode = p.parseNumExpression()
 		p.swallow(lexer.PAREN_RIGHT)
 	case lexer.IDENTIFIER:
-		if symbol, exists := p.currentBlock.Symbols[t.Value]; exists {
+		if symbol, exists := p.currentBlock().Symbols.Get(t.Value); exists {
 			switch symbol.(type) {
 			case *ast.NumberSymbol:
 				result.NumberNode = symbol.(*ast.NumberSymbol)

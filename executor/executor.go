@@ -9,15 +9,20 @@ import (
 // Executor contains the execution
 // environment for this interpreter
 type Executor struct {
-	Errors       []error
-	CurrentBlock *ast.Block
+	Errors []error
+	blocks *ast.BlockStack
 }
 
 // NewExecutor ...
 func NewExecutor() *Executor {
-	result := &Executor{}
+	result := &Executor{blocks: ast.NewBlockStack()}
 	result.Reset()
 	return result
+}
+
+// CurrentBlock returns the current execution block
+func (e *Executor) CurrentBlock() *ast.Block {
+	return e.blocks.Peek()
 }
 
 // Reset sets the execution environment
@@ -28,18 +33,26 @@ func (e *Executor) Reset() {
 
 // Execute executes the supplies AST
 func (e *Executor) Execute(program *ast.Program) {
-	e.CurrentBlock = program.BlockNode
-	if e.CurrentBlock == nil {
+	if program == nil {
+		e.addError(fmt.Errorf("Invalid program"))
+		return
+	}
+
+	if program.BlockNode == nil {
 		e.addError(fmt.Errorf("Program must contain a statement block"))
 		return
 	}
 
-	if e.CurrentBlock.StatementsNode == nil {
-		e.addError(fmt.Errorf("Program block must contain statements"))
+	e.executeBlock(program.BlockNode)
+}
+
+func (e *Executor) executeBlock(block *ast.Block) {
+	e.blocks.Push(block)
+	if e.CurrentBlock().StatementsNode == nil {
 		return
 	}
 
-	stmts := e.CurrentBlock.StatementsNode
+	stmts := e.CurrentBlock().StatementsNode
 	for _, s := range stmts.StatementListNode {
 		switch s.(type) {
 		case *ast.NullStatement:
@@ -48,7 +61,31 @@ func (e *Executor) Execute(program *ast.Program) {
 			e.executePrint(s.(*ast.PrintStatement))
 		case *ast.AssignStatement:
 			e.executeAssignment(s.(*ast.AssignStatement))
+		case *ast.VarStatement:
+			e.executeVar(s.(*ast.VarStatement))
+		case *ast.Block:
+			e.executeBlock(s.(*ast.Block))
 		}
+	}
+	e.blocks.Pop()
+}
+
+func (e *Executor) executeVar(s *ast.VarStatement) {
+	if symbol := s.SymbolNode; symbol != nil && s.ExpressionNode != nil {
+		if symbol, exists := e.CurrentBlock().Symbols.Get(s.SymbolNode.GetName()); exists {
+			switch symbol.GetDataType() {
+			case ast.TypeString:
+				symbol.SetValue(e.evaluateStringExpression(s.ExpressionNode.(*ast.StringExpression)))
+				return
+			case ast.TypeNumber:
+				symbol.SetValue(e.evaluateNumExpression(s.ExpressionNode.(*ast.NumExpression)))
+				return
+			default:
+				e.addError(fmt.Errorf("Unrecognized data type for variable %s", s.SymbolNode.GetName()))
+				return
+			}
+		}
+
 	}
 }
 
@@ -58,7 +95,7 @@ func (e *Executor) executeAssignment(s *ast.AssignStatement) {
 		return
 	}
 
-	if symbol, exists := e.CurrentBlock.Symbols[s.SymbolNode.GetName()]; exists {
+	if symbol, exists := e.CurrentBlock().Symbols.GetLocal(s.SymbolNode.GetName()); exists {
 		switch symbol.GetDataType() {
 		case ast.TypeString:
 			symbol.SetValue(e.evaluateStringExpression(s.ExpressionNode.(*ast.StringExpression)))

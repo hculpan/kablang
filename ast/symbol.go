@@ -13,6 +13,15 @@ var typeNames []string = []string{
 	"number",
 }
 
+// GetTypeName ...
+func GetTypeName(dataType int) string {
+	if dataType >= 0 && dataType < len(typeNames) {
+		return typeNames[dataType]
+	}
+
+	return "unknown"
+}
+
 // Symbol interface represents any
 // type of symbol
 type Symbol interface {

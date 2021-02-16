@@ -1,0 +1,14 @@
+{
+    var a string = "Hello"
+    var b number = 1
+    
+    {
+        # var b number = 2
+        var a number
+        a = 2
+        println a+b
+    }
+
+    println a
+    println b
+}

@@ -36,14 +36,6 @@ func main() {
 	parser := parser.NewParser()
 	program, errs := parser.Parse(lines)
 
-	if len(errs) > 0 {
-		fmt.Println("Errors reported:")
-		for _, e := range errs {
-			fmt.Println("    ", e)
-		}
-		return
-	}
-
 	if program == nil {
 		fmt.Println("We have an invalid program node")
 		return
@@ -55,6 +47,14 @@ func main() {
 
 	if outputSymbols {
 		outputSymbolsToFile(inputFilenameBase, program)
+	}
+
+	if len(errs) > 0 {
+		fmt.Println("Errors reported:")
+		for _, e := range errs {
+			fmt.Println("    ", e)
+		}
+		return
 	}
 
 	ex := executor.NewExecutor()
@@ -126,7 +126,7 @@ func outputSymbolsToFile(filenameBase string, program *ast.Program) {
 
 	writer := bufio.NewWriter(file)
 	_, err = writer.WriteString("Symbols:\n")
-	for _, v := range program.BlockNode.Symbols {
+	for _, v := range program.BlockNode.Symbols.GetSymbols() {
 		_, err = writer.WriteString(v.AsString("  ") + "\n")
 	}
 	if err != nil {

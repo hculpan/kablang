@@ -1,10 +1,13 @@
-var ab string
-var b string
-var num number
-ab = "The answer to (20+(5*2))*(10/(1+1))*-1"
-b = " is "
-num = (20+(5*2))*(10/(1+1))*-1
-print ab
-print b 
-print num
-println
+{
+    var thisIsALongName string = "The answer to (20+(5*2))*(10/(1+1))*0.31"
+    var b string = " is "
+    var num2 number = 0.32
+    var num1 number = (20+(5*2))*(10/(1+1))
+
+    num1 = num1 * num2
+
+    print thisIsALongName
+    print b 
+    print num1
+    println
+}
