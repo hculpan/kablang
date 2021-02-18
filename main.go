@@ -10,7 +10,6 @@ import (
 
 	"github.com/hculpan/kablang/ast"
 	"github.com/hculpan/kablang/executor"
-	"github.com/hculpan/kablang/lexer"
 	"github.com/hculpan/kablang/parser"
 )
 
@@ -26,8 +25,6 @@ func main() {
 	if !processCommandLine() {
 		return
 	}
-
-	lexer.InitTokenDefinitions()
 
 	fmt.Println("Kab Interpreter v0.1")
 	lines, err := readInputFile(inputFilename)

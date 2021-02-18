@@ -12,6 +12,7 @@ func TestLexer1(t *testing.T) {
 		t.Fail()
 	}
 
+	fmt.Printf("%+v\n", r)
 	if len(r) != 3 {
 		t.Log(fmt.Sprintf("Expected 3 tokens, found %d", len(r)))
 		t.Fail()
@@ -223,7 +224,8 @@ func TestLexer10(t *testing.T) {
 		return
 	}
 
-	expectedCount := 21
+	//	fmt.Printf("%+v\n", r)
+	expectedCount := 23
 	if len(r) != expectedCount {
 		t.Log(fmt.Sprintf("Expected %d tokens, found %d", expectedCount, len(r)))
 		t.Fail()
@@ -235,20 +237,22 @@ func TestLexer10(t *testing.T) {
 		testToken(t, r[4], Token{TypeID: Integer, Value: `2`})
 		testToken(t, r[5], Token{TypeID: RightParen, Value: `)`})
 		testToken(t, r[6], Token{TypeID: LeftCurlyBrace, Value: `{`})
-		testToken(t, r[7], Token{TypeID: RightCurlyBrace, Value: `}`})
-		testToken(t, r[8], Token{TypeID: Else, Value: `else`})
-		testToken(t, r[9], Token{TypeID: If, Value: `if`})
-		testToken(t, r[10], Token{TypeID: LeftParen, Value: `(`})
-		testToken(t, r[11], Token{TypeID: Not, Value: `!`})
-		testToken(t, r[12], Token{TypeID: Identifier, Value: `fora`})
-		testToken(t, r[13], Token{TypeID: Period, Value: `.`})
-		testToken(t, r[14], Token{TypeID: Identifier, Value: `Equals`})
-		testToken(t, r[15], Token{TypeID: LeftParen, Value: `(`})
-		testToken(t, r[16], Token{TypeID: String, Value: `"A test"`})
-		testToken(t, r[17], Token{TypeID: RightParen, Value: `)`})
+		testToken(t, r[7], Token{TypeID: Newline, Value: `\n`})
+		testToken(t, r[8], Token{TypeID: RightCurlyBrace, Value: `}`})
+		testToken(t, r[9], Token{TypeID: Else, Value: `else`})
+		testToken(t, r[10], Token{TypeID: If, Value: `if`})
+		testToken(t, r[11], Token{TypeID: LeftParen, Value: `(`})
+		testToken(t, r[12], Token{TypeID: Not, Value: `!`})
+		testToken(t, r[13], Token{TypeID: Identifier, Value: `fora`})
+		testToken(t, r[14], Token{TypeID: Period, Value: `.`})
+		testToken(t, r[15], Token{TypeID: Identifier, Value: `Equals`})
+		testToken(t, r[16], Token{TypeID: LeftParen, Value: `(`})
+		testToken(t, r[17], Token{TypeID: String, Value: `"A test"`})
 		testToken(t, r[18], Token{TypeID: RightParen, Value: `)`})
-		testToken(t, r[19], Token{TypeID: LeftCurlyBrace, Value: `{`})
-		testToken(t, r[20], Token{TypeID: RightCurlyBrace, Value: `}`})
+		testToken(t, r[19], Token{TypeID: RightParen, Value: `)`})
+		testToken(t, r[20], Token{TypeID: LeftCurlyBrace, Value: `{`})
+		testToken(t, r[21], Token{TypeID: Newline, Value: `\n`})
+		testToken(t, r[22], Token{TypeID: RightCurlyBrace, Value: `}`})
 	}
 }
 

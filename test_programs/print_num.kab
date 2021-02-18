@@ -1,4 +1,6 @@
-print "The answer is "
-print (20+(5*2))*(10/(1+1))
-println
-println "All done!"
+{
+    print "The answer is "
+    print (20+(5*2))*(10/(1+1))
+    println
+    println "All done!"
+}

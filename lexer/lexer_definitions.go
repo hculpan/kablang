@@ -59,49 +59,70 @@ const (
 // TokenDef contains definition of an
 // individual type of token
 type TokenDef struct {
-	TypeID  TokenType
-	Match   string
-	Name    string
-	Keyword bool
-	exp     *regexp.Regexp
+	TypeID   TokenType
+	Match    string
+	Name     string
+	Priority int
+	exp      *regexp.Regexp
 }
 
+type byPriority []TokenDef
+
+func (a byPriority) Len() int           { return len(a) }
+func (a byPriority) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byPriority) Less(i, j int) bool { return a[i].Priority > a[j].Priority }
+
 var tokenDefs []TokenDef = []TokenDef{
-	{TypeID: Identifier, Match: `^[a-zA-Z][a-zA-Z_0-9]*$`, Name: "Identifier"},
-	{TypeID: Println, Match: "^println$", Name: "Println", Keyword: true},
-	{TypeID: Print, Match: "^print$", Name: "Print", Keyword: true},
-	{TypeID: Var, Match: "^var$", Name: "Var", Keyword: true},
-	{TypeID: StringType, Match: "^string$", Name: "String", Keyword: true},
-	{TypeID: NumberType, Match: "^number$", Name: "Number", Keyword: true},
-	{TypeID: For, Match: `^for$`, Name: "For", Keyword: true},
-	{TypeID: If, Match: `^if$`, Name: "If", Keyword: true},
-	{TypeID: Else, Match: `^else$`, Name: "Else", Keyword: true},
-	{TypeID: Integer, Match: `^[0-9]+$`, Name: "Integer"},
-	{TypeID: Float, Match: `^[0-9]+\.[0-9]*$`, Name: "Float"},
-	{TypeID: Percent, Match: `^%$`, Name: "Percent"},
-	{TypeID: Dash, Match: `^-$`, Name: "Dash"},
-	{TypeID: Plus, Match: `^\+$`, Name: "Plus"},
-	{TypeID: PlusEquals, Match: `^\+=$`, Name: "Plus Equals"},
-	{TypeID: DoublePlus, Match: `^\+\+$`, Name: "Double Plus"},
-	{TypeID: Mult, Match: `^\*$`, Name: "Mult"},
-	{TypeID: Div, Match: `^/$`, Name: "Div"},
-	{TypeID: Equals, Match: `^=$`, Name: "Equals"},
-	{TypeID: String, Match: `^\".*\"$`, Name: "String"},
-	{TypeID: LeftCurlyBrace, Match: `^\{$`, Name: "Left Curly Brace"},
-	{TypeID: RightCurlyBrace, Match: `^\}$`, Name: "Right Curly Brace"},
-	{TypeID: LeftParen, Match: `^\($`, Name: "Left Paren"},
-	{TypeID: RightParen, Match: `^\)$`, Name: "Right Parent"},
-	{TypeID: LessThanEquals, Match: `^<=$`, Name: "Less Than or Equals"},
-	{TypeID: LessThan, Match: `^<$`, Name: "Less Than"},
-	{TypeID: GreaterThanEquals, Match: `^>=$`, Name: "Greater Than or Equals"},
-	{TypeID: GreaterThan, Match: `^>$`, Name: "Greater Than"},
-	{TypeID: DoubleEquals, Match: `^==$`, Name: "Double Equals"},
-	{TypeID: Not, Match: `^!$`, Name: "Not"},
-	{TypeID: NotEquals, Match: `^!=$`, Name: "Not Equals"},
-	{TypeID: Period, Match: `^\.$`, Name: "Period"},
-	{TypeID: Newline, Match: ``, Name: "Newline"},
-	{TypeID: Hash, Match: `^#$`, Name: "Hash"},
-	{TypeID: EndTokenList, Match: ``, Name: "End of tokens"},
+	newTokenDef(Identifier, `^[a-zA-Z][a-zA-Z_0-9]*`, "Identifier"),
+	newTokenDef(Println, "^println", "Println"),
+	newTokenDef(Print, "^print", "Print"),
+	newTokenDef(Var, "^var", "Var"),
+	newTokenDef(StringType, "^string", "String"),
+	newTokenDef(NumberType, "^number", "Number"),
+	newTokenDef(For, `^for`, "For"),
+	newTokenDef(If, `^if`, "If"),
+	newTokenDef(Else, `^else`, "Else"),
+	newTokenDef(Integer, `^[0-9]+`, "Integer"),
+	newTokenDef(Float, `^[0-9]+\.[0-9]*`, "Float"),
+	newTokenDef(Percent, `^%`, "Percent"),
+	newTokenDef(Dash, `^-`, "Dash"),
+	newTokenDef(Plus, `^\+`, "Plus"),
+	newTokenDef(PlusEquals, `^\+=`, "Plus Equals"),
+	newTokenDef(DoublePlus, `^\+\+`, "Double Plus"),
+	newTokenDef(Mult, `^\*`, "Mult"),
+	newTokenDef(Div, `^/`, "Div"),
+	newTokenDef(Equals, `^=`, "Equals"),
+	newTokenDef(String, `^\"[^\"]*\"`, "String"),
+	newTokenDef(LeftCurlyBrace, `^\{`, "Left Curly Brace"),
+	newTokenDef(RightCurlyBrace, `^\}`, "Right Curly Brace"),
+	newTokenDef(LeftParen, `^\(`, "Left Paren"),
+	newTokenDef(RightParen, `^\)`, "Right Parent"),
+	newTokenDef(LessThanEquals, `^<=`, "Less Than or Equals"),
+	newTokenDef(LessThan, `^<`, "Less Than"),
+	newTokenDef(GreaterThanEquals, `^>=`, "Greater Than or Equals"),
+	newTokenDef(GreaterThan, `^>`, "Greater Than"),
+	newTokenDef(DoubleEquals, `^==`, "Double Equals"),
+	newTokenDef(Not, `^!`, "Not"),
+	newTokenDef(NotEquals, `^!=`, "Not Equals"),
+	newTokenDef(Period, `^\.`, "Period"),
+	newTokenDef(Newline, `^[\n]+`, "Newline"),
+	newTokenDef(Hash, `^#`, "Hash"),
+	newTokenDef(EndTokenList, ``, "End of tokens"),
+}
+
+func newTokenDef(typeID TokenType, match string, name string) TokenDef {
+	var result TokenDef
+
+	if typeID == Identifier || typeID == Integer || typeID == String {
+		result = TokenDef{TypeID: typeID, Match: match, Name: name, Priority: 0}
+	} else if typeID == Float {
+		result = TokenDef{TypeID: typeID, Match: match, Name: name, Priority: 1}
+	} else {
+		result = TokenDef{TypeID: typeID, Match: match, Name: name, Priority: len(match)}
+	}
+	result.compile()
+
+	return result
 }
 
 // GetTokenDef returns the token definition
