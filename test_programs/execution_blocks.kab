@@ -3,10 +3,10 @@
     var b number = 1
     
     {
-        # var b number = 2
-        var a number
-        a = 2
-        println a+b
+        var ab number
+        ab = 2
+        println a
+        println ab+b
     }
 
     println a

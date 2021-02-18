@@ -18,20 +18,21 @@ TODO:
 <comment-statement> := # ... NEWLINE
 <print-statement> := print <string-expression> | print <num-expression>
 <println-statement> := println | println <string-expression> | println <num-expression>
-<assignment-statement> := <identifier> = <string-expression> | <identifier> = <num-expression>
-<var-statement> := var <identifier> <data-type> | var <identifier> <data-type> = <string-expression | num-expression>
+<function-statement> := <function-call>
+<assignment-statement> := <identifier> = <string-expression | num-expression>
 <function-call> := <identifier>(<parameter-list>)
 <parameter-list> := <parameter> | <parameter>,<parameter-list>
 <parameter> := <string-expression> | <num-expression>
+<var-statement> := var <identifier> <data-type> | var <identifier> <data-type> = <string-expression | num-expression>
 <string-expression> := <string> | <string> + <string-expression>
 <num-expression> := <term> | <term> <additive_operator> <num-expression>
 <additive_operator> := + | -
 <term> := <factor> | <factor> <multiplicative_operator> <term>
 <multiplicative_operator> := * | /
-<factor> := <number> | <signed_number> | ( <num-expression> ) | <identifier>
+<factor> := <number> | <signed_number> | ( <num-expression> ) | <identifier> | <function-call>
 <signed_number> := <additive_operator> <number> 
 <number> := <positive_integer> | <positive_integer> . <positive_integer>
 <positive_integer> := <digit> | <digit> <positive_integer>
 <digit> := 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-<string> := " <any character> " | <identifier>
+<string> := " <any character> " | <identifier> | <function-call>
 <data-type> := string | number
