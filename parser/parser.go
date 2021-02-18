@@ -47,11 +47,11 @@ func (p *Parser) parseProgram() *ast.Program {
 }
 
 func (p *Parser) parseBlock(parent *ast.Block) *ast.Block {
-	p.swallow(lexer.CURLY_BRACE_LEFT)
+	p.swallow(lexer.LeftCurlyBrace)
 	result := ast.NewBlock(parent)
 	p.blockStack.Push(result)
 	result.StatementsNode = p.parseStatements()
-	p.swallow(lexer.CURLY_BRACE_RIGHT)
+	p.swallow(lexer.RightCurlyBrace)
 	p.blockStack.Pop()
 	return result
 }
@@ -68,24 +68,24 @@ func (p *Parser) parseStatements() *ast.Statements {
 		var stmt ast.Statement = nil
 		t := p.lexerHandler.Pop()
 		switch t.TypeID {
-		case lexer.NEWLINE:
+		case lexer.Newline:
 			continue
-		case lexer.CURLY_BRACE_LEFT:
+		case lexer.LeftCurlyBrace:
 			p.lexerHandler.Push()
 			stmt = p.parseBlock(p.blockStack.Peek())
-		case lexer.CURLY_BRACE_RIGHT:
+		case lexer.RightCurlyBrace:
 			p.lexerHandler.Push()
 			done = true
-		case lexer.END_TOKEN_LIST:
+		case lexer.EndTokenList:
 			done = true
-		case lexer.HASH:
+		case lexer.Hash:
 			for {
 				t = p.lexerHandler.Pop()
-				if t.TypeID == lexer.NEWLINE || t.TypeID == lexer.END_TOKEN_LIST {
+				if t.TypeID == lexer.Newline || t.TypeID == lexer.EndTokenList {
 					break
 				}
 			}
-		case lexer.VAR:
+		case lexer.Var:
 			a, err := p.parseVarStatement()
 			if err == nil {
 				stmt = a
@@ -96,20 +96,20 @@ func (p *Parser) parseStatements() *ast.Statements {
 				}
 				p.currentBlock().AddSymbol(symbol)
 			}
-			p.swallow(lexer.NEWLINE)
-		case lexer.IDENTIFIER:
+			p.swallow(lexer.Newline)
+		case lexer.Identifier:
 			stmt = p.parseAssignStatement(&t)
-			p.swallow(lexer.NEWLINE)
-		case lexer.PRINT:
+			p.swallow(lexer.Newline)
+		case lexer.Print:
 			p.lexerHandler.Push()
 			stmt = p.parsePrintStatement(false)
-			if !p.lexerHandler.Swallow(lexer.NEWLINE) {
-				p.addExpectedErrorForTypeID(lexer.NEWLINE, t)
+			if !p.lexerHandler.Swallow(lexer.Newline) {
+				p.addExpectedErrorForTypeID(lexer.Newline, t)
 			}
-		case lexer.PRINTLN:
+		case lexer.Println:
 			p.lexerHandler.Push()
 			stmt = p.parsePrintStatement(true)
-			p.swallow(lexer.NEWLINE)
+			p.swallow(lexer.Newline)
 		default:
 			p.addError(fmt.Errorf("Unexpected token: '%s' at line %d:%d", t.Value, t.Line, t.Col))
 			done = true
@@ -123,11 +123,11 @@ func (p *Parser) parseStatements() *ast.Statements {
 }
 
 func (p *Parser) parseAssignStatement(t *lexer.Token) *ast.AssignStatement {
-	if t.TypeID != lexer.IDENTIFIER {
+	if t.TypeID != lexer.Identifier {
 		return nil
 	}
 
-	p.swallow(lexer.EQUALS)
+	p.swallow(lexer.Equals)
 
 	if symbol, exists := p.currentBlock().Symbols.GetLocal(t.Value); exists {
 		stmt := ast.NewAssignStatement(symbol)
@@ -150,14 +150,14 @@ func (p *Parser) parseAssignStatement(t *lexer.Token) *ast.AssignStatement {
 
 func (p *Parser) parseVarStatement() (*ast.VarStatement, error) {
 	nameToken := p.lexerHandler.Pop()
-	if nameToken.TypeID != lexer.IDENTIFIER {
+	if nameToken.TypeID != lexer.Identifier {
 		p.lexerHandler.Push()
-		p.addExpectedErrorForTypeID(lexer.IDENTIFIER, nameToken)
+		p.addExpectedErrorForTypeID(lexer.Identifier, nameToken)
 		return nil, fmt.Errorf("")
 	}
 
 	typeToken := p.lexerHandler.Pop()
-	if typeToken.TypeID != lexer.STRING_TYPE && typeToken.TypeID != lexer.NUMBER_TYPE {
+	if typeToken.TypeID != lexer.StringType && typeToken.TypeID != lexer.NumberType {
 		p.lexerHandler.Push()
 		p.addExpectedErrorForString("Expecting data type indicator", typeToken)
 		return nil, fmt.Errorf("")
@@ -176,8 +176,8 @@ func (p *Parser) parseVarStatement() (*ast.VarStatement, error) {
 	}
 
 	t := p.lexerHandler.Peek()
-	if t.TypeID == lexer.EQUALS {
-		p.swallow(lexer.EQUALS)
+	if t.TypeID == lexer.Equals {
+		p.swallow(lexer.Equals)
 		switch result.SymbolNode.GetDataType() {
 		case ast.TypeString:
 			result.ExpressionNode = p.parseStringExpression()
@@ -195,22 +195,22 @@ func (p *Parser) parseVarStatement() (*ast.VarStatement, error) {
 
 func (p *Parser) parsePrintStatement(endline bool) *ast.PrintStatement {
 	if endline {
-		p.swallow(lexer.PRINTLN)
+		p.swallow(lexer.Println)
 	} else {
-		p.swallow(lexer.PRINT)
+		p.swallow(lexer.Print)
 	}
 
 	t := p.lexerHandler.Peek()
 	switch t.TypeID {
-	case lexer.NEWLINE:
+	case lexer.Newline:
 		return ast.NewEmptyPrintStatement(endline)
-	case lexer.END_TOKEN_LIST:
+	case lexer.EndTokenList:
 		return ast.NewEmptyPrintStatement(endline)
-	case lexer.STRING:
+	case lexer.String:
 		return ast.NewStringPrintStatement(p.parseStringExpression(), endline)
-	case lexer.INTEGER, lexer.FLOAT, lexer.DASH, lexer.PAREN_LEFT:
+	case lexer.Integer, lexer.Float, lexer.Dash, lexer.LeftParen:
 		return ast.NewNumPrintStatement(p.parseNumExpression(), endline)
-	case lexer.IDENTIFIER:
+	case lexer.Identifier:
 		if symbol, exists := p.currentBlock().Symbols.Get(t.Value); exists {
 			switch symbol.GetDataType() {
 			case ast.TypeString:
@@ -235,7 +235,7 @@ func (p *Parser) parseString() ast.StringValue {
 
 	t := p.lexerHandler.Pop()
 	switch t.TypeID {
-	case lexer.IDENTIFIER:
+	case lexer.Identifier:
 		if symbol, exists := p.currentBlock().Symbols.Get(t.Value); exists {
 			switch symbol.(type) {
 			case *ast.StringSymbol:
@@ -248,7 +248,7 @@ func (p *Parser) parseString() ast.StringValue {
 			p.addError(fmt.Errorf("Undeclared variable '%s' at %d:%d", t.Value, t.Line, t.Col))
 			return nil
 		}
-	case lexer.STRING:
+	case lexer.String:
 		result = ast.NewString(t.Value)
 	}
 
@@ -262,10 +262,10 @@ func (p *Parser) parseStringExpression() *ast.StringExpression {
 
 	t := p.lexerHandler.Pop()
 	switch t.TypeID {
-	case lexer.PLUS:
+	case lexer.Plus:
 		t2 := p.lexerHandler.Peek()
-		if t2.TypeID != lexer.STRING && t2.TypeID != lexer.IDENTIFIER {
-			p.addExpectedErrorForTypeID(lexer.STRING, t2)
+		if t2.TypeID != lexer.String && t2.TypeID != lexer.Identifier {
+			p.addExpectedErrorForTypeID(lexer.String, t2)
 		}
 		result.StringExpressionNode = p.parseStringExpression()
 	default:
@@ -275,7 +275,7 @@ func (p *Parser) parseStringExpression() *ast.StringExpression {
 	return result
 }
 
-func (p *Parser) swallow(typeID int) bool {
+func (p *Parser) swallow(typeID lexer.TokenType) bool {
 	if !p.lexerHandler.Swallow(typeID) {
 		p.addExpectedErrorForTypeID(typeID, p.lexerHandler.Peek())
 		return false
@@ -284,7 +284,7 @@ func (p *Parser) swallow(typeID int) bool {
 	return true
 }
 
-func (p *Parser) addExpectedErrorForTypeID(expected int, actual lexer.Token) {
+func (p *Parser) addExpectedErrorForTypeID(expected lexer.TokenType, actual lexer.Token) {
 	tokenDef := p.GetTokenDef(expected)
 	if tokenDef != nil {
 		p.addExpectedError(*tokenDef, actual)
@@ -306,6 +306,6 @@ func (p *Parser) addError(e error) {
 // GetTokenDef tries to get the token definition from the
 // lexer definition, and if that fails, tries to get it
 // from the keywords
-func (p *Parser) GetTokenDef(typeID int) *lexer.TokenDef {
+func (p *Parser) GetTokenDef(typeID lexer.TokenType) *lexer.TokenDef {
 	return lexer.GetTokenDef(typeID)
 }

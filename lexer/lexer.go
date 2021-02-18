@@ -7,7 +7,7 @@ import (
 
 // Token represents a token within a string
 type Token struct {
-	TypeID int
+	TypeID TokenType
 	Value  string
 	Name   string
 
@@ -16,7 +16,7 @@ type Token struct {
 }
 
 // NewToken ...
-func NewToken(typeID int, v string, name string, line int, col int) *Token {
+func NewToken(typeID TokenType, v string, name string, line int, col int) *Token {
 	return &Token{Value: v, TypeID: typeID, Name: name, Line: line, Col: col}
 }
 
@@ -88,7 +88,7 @@ func findKeywordMatch(s string) *TokenDef {
 func checkForKeywords(tokens []Token) []Token {
 	result := []Token{}
 	for _, v := range tokens {
-		if v.TypeID == IDENTIFIER {
+		if v.TypeID == Identifier {
 			if t := findKeywordMatch(v.Value); t != nil {
 				v.TypeID = t.TypeID
 				v.Name = t.Name

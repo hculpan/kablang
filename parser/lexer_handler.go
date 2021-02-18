@@ -21,10 +21,10 @@ func NewLexerHandler(lines []string) *LexerHandler {
 		if err != nil {
 			result.Errors = append(result.Errors, err)
 		}
-		tokens = append(tokens, *lexer.NewToken(lexer.NEWLINE, "\n", "Newline", i+1, len(l)))
+		tokens = append(tokens, *lexer.NewToken(lexer.Newline, "\n", "Newline", i+1, len(l)))
 		result.tokens = append(result.tokens, tokens...)
 	}
-	result.tokens = append(result.tokens, *lexer.NewToken(lexer.END_TOKEN_LIST, "END_TOKENS", "End of tokens", len(lines), 0))
+	result.tokens = append(result.tokens, *lexer.NewToken(lexer.EndTokenList, "END_TOKENS", "End of tokens", len(lines), 0))
 
 	return result
 }
@@ -33,7 +33,7 @@ func NewLexerHandler(lines []string) *LexerHandler {
 // index
 func (l *LexerHandler) Pop() lexer.Token {
 	result := l.tokens[l.currTokenIndex]
-	if result.TypeID != lexer.END_TOKEN_LIST {
+	if result.TypeID != lexer.EndTokenList {
 		l.currTokenIndex++
 	}
 	return result
@@ -56,7 +56,7 @@ func (l *LexerHandler) Push() lexer.Token {
 
 // Swallow will consume the next token if it
 // matches the expected type
-func (l *LexerHandler) Swallow(typeID int) bool {
+func (l *LexerHandler) Swallow(typeID lexer.TokenType) bool {
 	t := l.Pop()
 	if t.TypeID != typeID {
 		l.Push()

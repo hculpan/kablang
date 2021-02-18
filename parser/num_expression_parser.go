@@ -14,10 +14,10 @@ func (p *Parser) parseNumExpression() *ast.NumExpression {
 	result.TermNode = p.term()
 	t := p.lexerHandler.Pop()
 	switch t.TypeID {
-	case lexer.PLUS:
+	case lexer.Plus:
 		result.Operator = ast.PlusOperator
 		result.NumExpressionNode = p.parseNumExpression()
-	case lexer.DASH:
+	case lexer.Dash:
 		result.Operator = ast.MinusOperator
 		result.NumExpressionNode = p.parseNumExpression()
 	default:
@@ -33,10 +33,10 @@ func (p *Parser) term() *ast.Term {
 
 	t := p.lexerHandler.Pop()
 	switch t.TypeID {
-	case lexer.MULT:
+	case lexer.Mult:
 		result.Operator = ast.MultOperator
 		result.TermNode = p.term()
-	case lexer.DIV:
+	case lexer.Div:
 		result.Operator = ast.DivOperator
 		result.TermNode = p.term()
 	default:
@@ -51,11 +51,11 @@ func (p *Parser) factor() *ast.Factor {
 
 	t := p.lexerHandler.Pop()
 	switch t.TypeID {
-	case lexer.INTEGER, lexer.FLOAT:
+	case lexer.Integer, lexer.Float:
 		result.NumberNode = p.number(&t)
-	case lexer.DASH:
+	case lexer.Dash:
 		t = p.lexerHandler.Pop()
-		if t.TypeID != lexer.INTEGER && t.TypeID != lexer.FLOAT {
+		if t.TypeID != lexer.Integer && t.TypeID != lexer.Float {
 			p.lexerHandler.Push()
 			p.addExpectedErrorForString("Expected number", t)
 			return result
@@ -63,10 +63,10 @@ func (p *Parser) factor() *ast.Factor {
 		result.NumberNode = p.number(&t)
 		r := result.NumberNode.Mult(ast.NewIntNumber(-1))
 		result.NumberNode = &r
-	case lexer.PAREN_LEFT:
+	case lexer.LeftParen:
 		result.ParenNode = p.parseNumExpression()
-		p.swallow(lexer.PAREN_RIGHT)
-	case lexer.IDENTIFIER:
+		p.swallow(lexer.RightParen)
+	case lexer.Identifier:
 		if symbol, exists := p.currentBlock().Symbols.Get(t.Value); exists {
 			switch symbol.(type) {
 			case *ast.NumberSymbol:
@@ -92,10 +92,10 @@ func (p *Parser) number(t *lexer.Token) *ast.Number {
 	var result *ast.Number
 
 	switch t.TypeID {
-	case lexer.INTEGER:
+	case lexer.Integer:
 		n, _ := strconv.Atoi(t.Value)
 		result = ast.NewIntNumber(int64(n))
-	case lexer.FLOAT:
+	case lexer.Float:
 		n, _ := strconv.ParseFloat(t.Value, 64)
 		result = ast.NewFloatNumber(n)
 	}

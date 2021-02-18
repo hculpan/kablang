@@ -10,8 +10,11 @@ import (
 
 	"github.com/hculpan/kablang/ast"
 	"github.com/hculpan/kablang/executor"
+	"github.com/hculpan/kablang/lexer"
 	"github.com/hculpan/kablang/parser"
 )
+
+//go:generate stringer -type=TokenType ./lexer
 
 var outputAST bool = false
 var outputSymbols bool = false
@@ -23,6 +26,8 @@ func main() {
 	if !processCommandLine() {
 		return
 	}
+
+	lexer.InitTokenDefinitions()
 
 	fmt.Println("Kab Interpreter v0.1")
 	lines, err := readInputFile(inputFilename)

@@ -1,6 +1,8 @@
 package lexer
 
-import "regexp"
+import (
+	"regexp"
+)
 
 /****************************************************************
 *
@@ -12,49 +14,52 @@ import "regexp"
 *
 ****************************************************************/
 
+// TokenType is the id for the types of tokens
+type TokenType int
+
 // Token constants
 const (
-	IDENTIFIER = iota
-	PRINTLN
-	PRINT
-	VAR
-	STRING_TYPE
-	NUMBER_TYPE
-	FOR
-	IF
-	ELSE
-	INTEGER
-	FLOAT
-	PERCENT
-	DASH
-	PLUS
-	PLUS_EQUALS
-	DOUBLE_PLUS
-	MULT
-	DIV
-	EQUALS
-	STRING
-	CURLY_BRACE_LEFT
-	CURLY_BRACE_RIGHT
-	PAREN_LEFT
-	PAREN_RIGHT
-	LESS_THAN_EQUALS
-	LESS_THAN
-	GREATER_THAN_EQUALS
-	GREATER_THAN
-	DOUBLE_EQUALS
-	NOT
-	NOT_EQUALS
-	PERIOD
-	NEWLINE
-	HASH
-	END_TOKEN_LIST
+	Identifier TokenType = iota
+	Println
+	Print
+	Var
+	StringType
+	NumberType
+	For
+	If
+	Else
+	Integer
+	Float
+	Percent
+	Dash
+	Plus
+	PlusEquals
+	DoublePlus
+	Mult
+	Div
+	Equals
+	String
+	LeftCurlyBrace
+	RightCurlyBrace
+	LeftParen
+	RightParen
+	LessThanEquals
+	LessThan
+	GreaterThanEquals
+	GreaterThan
+	DoubleEquals
+	Not
+	NotEquals
+	Period
+	Newline
+	Hash
+	EndTokenList
 )
 
 // TokenDef contains definition of an
 // individual type of token
 type TokenDef struct {
-	TypeID  int
+	TypeID  TokenType
 	Match   string
 	Name    string
 	Keyword bool
@@ -62,50 +67,56 @@ type TokenDef struct {
 }
 
 var tokenDefs []TokenDef = []TokenDef{
-	{TypeID: IDENTIFIER, Match: `^[a-zA-Z][a-zA-Z_0-9]*$`, Name: "Identifier"},
-	{TypeID: PRINTLN, Match: "^println$", Name: "Println", Keyword: true},
-	{TypeID: PRINT, Match: "^print$", Name: "Print", Keyword: true},
-	{TypeID: VAR, Match: "^var$", Name: "Var", Keyword: true},
-	{TypeID: STRING_TYPE, Match: "^string$", Name: "String", Keyword: true},
-	{TypeID: NUMBER_TYPE, Match: "^number$", Name: "Number", Keyword: true},
-	{TypeID: FOR, Match: `^for$`, Name: "For", Keyword: true},
-	{TypeID: IF, Match: `^if$`, Name: "If", Keyword: true},
-	{TypeID: ELSE, Match: `^else$`, Name: "Else", Keyword: true},
-	{TypeID: INTEGER, Match: `^[0-9]+$`, Name: "Integer"},
-	{TypeID: FLOAT, Match: `^[0-9]+\.[0-9]*$`, Name: "Float"},
-	{TypeID: PERCENT, Match: `^%$`, Name: "Percent"},
-	{TypeID: DASH, Match: `^-$`, Name: "Dash"},
-	{TypeID: PLUS, Match: `^\+$`, Name: "Plus"},
-	{TypeID: PLUS_EQUALS, Match: `^\+=$`, Name: "Plus Equals"},
-	{TypeID: DOUBLE_PLUS, Match: `^\+\+$`, Name: "Double Plus"},
-	{TypeID: MULT, Match: `^\*$`, Name: "Mult"},
-	{TypeID: DIV, Match: `^/$`, Name: "Div"},
-	{TypeID: EQUALS, Match: `^=$`, Name: "Equals"},
-	{TypeID: STRING, Match: `^\".*\"$`, Name: "String"},
-	{TypeID: CURLY_BRACE_LEFT, Match: `^\{$`, Name: "Left Curly Brace"},
-	{TypeID: CURLY_BRACE_RIGHT, Match: `^\}$`, Name: "Right Curly Brace"},
-	{TypeID: PAREN_LEFT, Match: `^\($`, Name: "Left Paren"},
-	{TypeID: PAREN_RIGHT, Match: `^\)$`, Name: "Right Parent"},
-	{TypeID: LESS_THAN_EQUALS, Match: `^<=$`, Name: "Less Than or Equals"},
-	{TypeID: LESS_THAN, Match: `^<$`, Name: "Less Than"},
-	{TypeID: GREATER_THAN_EQUALS, Match: `^>=$`, Name: "Greater Than or Equals"},
-	{TypeID: GREATER_THAN, Match: `^>$`, Name: "Greater Than"},
-	{TypeID: DOUBLE_EQUALS, Match: `^==$`, Name: "Double Equals"},
-	{TypeID: NOT, Match: `^!$`, Name: "Not"},
-	{TypeID: NOT_EQUALS, Match: `^!=$`, Name: "Not Equals"},
-	{TypeID: PERIOD, Match: `^\.$`, Name: "Period"},
-	{TypeID: NEWLINE, Match: ``, Name: "Newline"},
-	{TypeID: HASH, Match: `^#$`, Name: "Hash"},
-	{TypeID: END_TOKEN_LIST, Match: ``, Name: "End of tokens"},
+	{TypeID: Identifier, Match: `^[a-zA-Z][a-zA-Z_0-9]*$`, Name: "Identifier"},
+	{TypeID: Println, Match: "^println$", Name: "Println", Keyword: true},
+	{TypeID: Print, Match: "^print$", Name: "Print", Keyword: true},
+	{TypeID: Var, Match: "^var$", Name: "Var", Keyword: true},
+	{TypeID: StringType, Match: "^string$", Name: "String", Keyword: true},
+	{TypeID: NumberType, Match: "^number$", Name: "Number", Keyword: true},
+	{TypeID: For, Match: `^for$`, Name: "For", Keyword: true},
+	{TypeID: If, Match: `^if$`, Name: "If", Keyword: true},
+	{TypeID: Else, Match: `^else$`, Name: "Else", Keyword: true},
+	{TypeID: Integer, Match: `^[0-9]+$`, Name: "Integer"},
+	{TypeID: Float, Match: `^[0-9]+\.[0-9]*$`, Name: "Float"},
+	{TypeID: Percent, Match: `^%$`, Name: "Percent"},
+	{TypeID: Dash, Match: `^-$`, Name: "Dash"},
+	{TypeID: Plus, Match: `^\+$`, Name: "Plus"},
+	{TypeID: PlusEquals, Match: `^\+=$`, Name: "Plus Equals"},
+	{TypeID: DoublePlus, Match: `^\+\+$`, Name: "Double Plus"},
+	{TypeID: Mult, Match: `^\*$`, Name: "Mult"},
+	{TypeID: Div, Match: `^/$`, Name: "Div"},
+	{TypeID: Equals, Match: `^=$`, Name: "Equals"},
+	{TypeID: String, Match: `^\".*\"$`, Name: "String"},
+	{TypeID: LeftCurlyBrace, Match: `^\{$`, Name: "Left Curly Brace"},
+	{TypeID: RightCurlyBrace, Match: `^\}$`, Name: "Right Curly Brace"},
+	{TypeID: LeftParen, Match: `^\($`, Name: "Left Paren"},
+	{TypeID: RightParen, Match: `^\)$`, Name: "Right Parent"},
+	{TypeID: LessThanEquals, Match: `^<=$`, Name: "Less Than or Equals"},
+	{TypeID: LessThan, Match: `^<$`, Name: "Less Than"},
+	{TypeID: GreaterThanEquals, Match: `^>=$`, Name: "Greater Than or Equals"},
+	{TypeID: GreaterThan, Match: `^>$`, Name: "Greater Than"},
+	{TypeID: DoubleEquals, Match: `^==$`, Name: "Double Equals"},
+	{TypeID: Not, Match: `^!$`, Name: "Not"},
+	{TypeID: NotEquals, Match: `^!=$`, Name: "Not Equals"},
+	{TypeID: Period, Match: `^\.$`, Name: "Period"},
+	{TypeID: Newline, Match: ``, Name: "Newline"},
+	{TypeID: Hash, Match: `^#$`, Name: "Hash"},
+	{TypeID: EndTokenList, Match: ``, Name: "End of tokens"},
 }
 
 // GetTokenDef returns the token definition
 // for the specified type id
-func GetTokenDef(typeID int) *TokenDef {
-	if typeID > END_TOKEN_LIST {
-		return nil
+func GetTokenDef(typeID TokenType) *TokenDef {
+	var result *TokenDef = nil
+
+	for _, v := range tokenDefs {
+		if v.TypeID == typeID {
+			result = &v
+			break
+		}
 	}
-	return &tokenDefs[typeID]
+
+	return result
 }
 
 func (t *TokenDef) compile() {
