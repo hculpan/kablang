@@ -37,6 +37,7 @@ const (
 	DoublePlus
 	Mult
 	Div
+	Exponent
 	Equals
 	String
 	LeftCurlyBrace
@@ -72,20 +73,24 @@ func (a byPriority) Len() int           { return len(a) }
 func (a byPriority) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byPriority) Less(i, j int) bool { return a[i].Priority > a[j].Priority }
 
+var keywords []TokenDef = []TokenDef{
+	newTokenDef(Println, "println", "Println"),
+	newTokenDef(Print, "print", "Print"),
+	newTokenDef(Var, "var", "Var"),
+	newTokenDef(For, `for`, "For"),
+	newTokenDef(If, `if`, "If"),
+	newTokenDef(Else, `else`, "Else"),
+}
+
 var tokenDefs []TokenDef = []TokenDef{
 	newTokenDef(Identifier, `^[a-zA-Z][a-zA-Z_0-9]*`, "Identifier"),
-	newTokenDef(Println, "^println", "Println"),
-	newTokenDef(Print, "^print", "Print"),
-	newTokenDef(Var, "^var", "Var"),
 	newTokenDef(StringType, "^string", "String"),
 	newTokenDef(NumberType, "^number", "Number"),
-	newTokenDef(For, `^for`, "For"),
-	newTokenDef(If, `^if`, "If"),
-	newTokenDef(Else, `^else`, "Else"),
 	newTokenDef(Integer, `^[0-9]+`, "Integer"),
 	newTokenDef(Float, `^[0-9]+\.[0-9]*`, "Float"),
 	newTokenDef(Percent, `^%`, "Percent"),
 	newTokenDef(Dash, `^-`, "Dash"),
+	newTokenDef(Exponent, `^\^`, "Exponent"),
 	newTokenDef(Plus, `^\+`, "Plus"),
 	newTokenDef(PlusEquals, `^\+=`, "Plus Equals"),
 	newTokenDef(DoublePlus, `^\+\+`, "Double Plus"),

@@ -3,6 +3,7 @@ package lexer
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // Token represents a token within a string
@@ -45,7 +46,7 @@ func Lex(s string, currLine int) ([]Token, error) {
 			}
 
 			if i := t.exp.FindStringIndex(s[currLoc:]); i != nil {
-				result = append(result, *NewToken(t.TypeID, s[currLoc:currLoc+i[1]], t.Name, currLine, currLoc+1))
+				result = append(result, *NewToken(t.TypeID, strings.Trim(s[currLoc:currLoc+i[1]], " \t"), t.Name, currLine, currLoc+1))
 				currLoc += i[1]
 				found = true
 			}
@@ -53,6 +54,15 @@ func Lex(s string, currLine int) ([]Token, error) {
 
 		if !found {
 			return result, fmt.Errorf("No token match for '%s'", s[currLoc:])
+		}
+	}
+
+	for i := range result {
+		for _, k := range keywords {
+			if result[i].Value == k.Match {
+				result[i].TypeID = k.TypeID
+				result[i].Name = k.Name
+			}
 		}
 	}
 

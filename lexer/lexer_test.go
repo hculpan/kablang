@@ -286,7 +286,6 @@ func TestLexer12_KeywordTest(t *testing.T) {
 	expectedCount := 6
 	if len(r) != expectedCount {
 		t.Log(fmt.Sprintf("Expected %d tokens, found %d", expectedCount, len(r)))
-		fmt.Printf("%+v\n", r[0])
 		t.Fail()
 	} else {
 		testToken(t, r[0], Token{TypeID: Println, Value: "println"})
@@ -295,6 +294,64 @@ func TestLexer12_KeywordTest(t *testing.T) {
 		testToken(t, r[3], Token{TypeID: Else, Value: "else"})
 		testToken(t, r[4], Token{TypeID: StringType, Value: "string"})
 		testToken(t, r[5], Token{TypeID: NumberType, Value: "number"})
+	}
+}
+
+// This test will have an identifier that starts with a
+// keyword.  It should be tokenized as an identifier, not
+// keyword.
+func TestLexer13_KeywordInIdentifier(t *testing.T) {
+	r, err := Lex(`print_id`, 1)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+		return
+	}
+
+	//	fmt.Printf("%+v\n", r)
+	expectedCount := 1
+	if len(r) != expectedCount {
+		t.Log(fmt.Sprintf("Expected %d tokens, found %d", expectedCount, len(r)))
+		t.Fail()
+	} else {
+		testToken(t, r[0], Token{TypeID: Identifier, Value: "print_id"})
+	}
+}
+
+func TestLexer14_ExponentTest(t *testing.T) {
+	r, err := Lex(`println num^3`, 1)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+		return
+	}
+
+	expectedCount := 4
+	if len(r) != expectedCount {
+		t.Log(fmt.Sprintf("Expected %d tokens, found %d", expectedCount, len(r)))
+		t.Fail()
+	} else {
+		testToken(t, r[0], Token{TypeID: Println, Value: "println"})
+		testToken(t, r[1], Token{TypeID: Identifier, Value: "num"})
+		testToken(t, r[2], Token{TypeID: Exponent, Value: "^"})
+		testToken(t, r[3], Token{TypeID: Integer, Value: "3"})
+	}
+}
+
+func TestLexer15_KeywordNoSpace(t *testing.T) {
+	r, err := Lex(`println`, 1)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+		return
+	}
+
+	expectedCount := 1
+	if len(r) != expectedCount {
+		t.Log(fmt.Sprintf("Expected %d tokens, found %d", expectedCount, len(r)))
+		t.Fail()
+	} else {
+		testToken(t, r[0], Token{TypeID: Println, Value: "println"})
 	}
 }
 

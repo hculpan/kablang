@@ -26,28 +26,29 @@ func _() {
 	_ = x[DoublePlus-15]
 	_ = x[Mult-16]
 	_ = x[Div-17]
-	_ = x[Equals-18]
-	_ = x[String-19]
-	_ = x[LeftCurlyBrace-20]
-	_ = x[RightCurlyBrace-21]
-	_ = x[LeftParen-22]
-	_ = x[RightParen-23]
-	_ = x[LessThanEquals-24]
-	_ = x[LessThan-25]
-	_ = x[GreaterThanEquals-26]
-	_ = x[GreaterThan-27]
-	_ = x[DoubleEquals-28]
-	_ = x[Not-29]
-	_ = x[NotEquals-30]
-	_ = x[Period-31]
-	_ = x[Newline-32]
-	_ = x[Hash-33]
-	_ = x[EndTokenList-34]
+	_ = x[Exponent-18]
+	_ = x[Equals-19]
+	_ = x[String-20]
+	_ = x[LeftCurlyBrace-21]
+	_ = x[RightCurlyBrace-22]
+	_ = x[LeftParen-23]
+	_ = x[RightParen-24]
+	_ = x[LessThanEquals-25]
+	_ = x[LessThan-26]
+	_ = x[GreaterThanEquals-27]
+	_ = x[GreaterThan-28]
+	_ = x[DoubleEquals-29]
+	_ = x[Not-30]
+	_ = x[NotEquals-31]
+	_ = x[Period-32]
+	_ = x[Newline-33]
+	_ = x[Hash-34]
+	_ = x[EndTokenList-35]
 }
 
-const _TokenType_name = "IdentifierPrintlnPrintVarStringTypeNumberTypeForIfElseIntegerFloatPercentDashPlusPlusEqualsDoublePlusMultDivEqualsStringLeftCurlyBraceRightCurlyBraceLeftParenRightParenLessThanEqualsLessThanGreaterThanEqualsGreaterThanDoubleEqualsNotNotEqualsPeriodNewlineHashEndTokenList"
+const _TokenType_name = "IdentifierPrintlnPrintVarStringTypeNumberTypeForIfElseIntegerFloatPercentDashPlusPlusEqualsDoublePlusMultDivExponentEqualsStringLeftCurlyBraceRightCurlyBraceLeftParenRightParenLessThanEqualsLessThanGreaterThanEqualsGreaterThanDoubleEqualsNotNotEqualsPeriodNewlineHashEndTokenList"
 
-var _TokenType_index = [...]uint16{0, 10, 17, 22, 25, 35, 45, 48, 50, 54, 61, 66, 73, 77, 81, 91, 101, 105, 108, 114, 120, 134, 149, 158, 168, 182, 190, 207, 218, 230, 233, 242, 248, 255, 259, 271}
+var _TokenType_index = [...]uint16{0, 10, 17, 22, 25, 35, 45, 48, 50, 54, 61, 66, 73, 77, 81, 91, 101, 105, 108, 116, 122, 128, 142, 157, 166, 176, 190, 198, 215, 226, 238, 241, 250, 256, 263, 267, 279}
 
 func (i TokenType) String() string {
 	if i < 0 || i >= TokenType(len(_TokenType_index)-1) {
