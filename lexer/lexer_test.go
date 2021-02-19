@@ -12,7 +12,6 @@ func TestLexer1(t *testing.T) {
 		t.Fail()
 	}
 
-	fmt.Printf("%+v\n", r)
 	if len(r) != 3 {
 		t.Log(fmt.Sprintf("Expected 3 tokens, found %d", len(r)))
 		t.Fail()
