@@ -1,4 +1,6 @@
 TODO:
+* Change data type constant to DataType; add stringer
+* Unify num/string expressions in syntax
 * Calling functions
 * Built-in functions
 * User-defined functions

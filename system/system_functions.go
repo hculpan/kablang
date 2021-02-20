@@ -27,7 +27,7 @@ func NewSystemFunction(
 
 // InitSystemFunctions loads all the system functions
 func InitSystemFunctions() {
-	NewSystemFunction("Hello", []ast.Parameter{}, ast.TypeString, func([]interface{}) interface{} {
+	NewSystemFunction("PrintHello", []ast.Parameter{}, ast.TypeString, func([]interface{}) interface{} {
 		fmt.Println("Hello")
 		return 0
 	})
